@@ -43,7 +43,7 @@ export default function App() {
         setUploadTaskSnapshot(taskSnapshot);
       });
       task.then(async () => {
-        const downloadURL = reference.getDownloadURL();
+        const downloadURL = await reference.getDownloadURL();
         setDownloadURL(downloadURL);
         setUploading(false);
         setUploadTaskSnapshot({});
@@ -59,13 +59,13 @@ export default function App() {
           <Text style={styles.buttonText}>Take Photo</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.button} onPress={onTakeVideo}>
-          <Text style={styles.buttonText}>Take Video</Text>
+          <Text style={styles.buttonText}>Record Video</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.button} onPress={onSelectImagePress}>
-          <Text style={styles.buttonText}>Upload Image</Text>
+          <Text style={styles.buttonText}>Pick a Photo</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.button} onPress={onSelectVideoPress}>
-          <Text style={styles.buttonText}>Upload Video</Text>
+          <Text style={styles.buttonText}>Pick a Video</Text>
         </TouchableOpacity>
       </View>
       {uploading && (
@@ -73,10 +73,10 @@ export default function App() {
           {!paused && (
             <ActivityIndicator size={60} color="#47477b"></ActivityIndicator>
           )}
-          <Text style={styles.uploadingText}>
+          <Text style={styles.statusText}>
             {!paused ? 'Uploading' : 'Paused'}
           </Text>
-          <Text style={styles.uploadingText}>
+          <Text style={styles.statusText}>
             {`${(
               (uploadTaskSnapshot.bytesTransferred /
                 uploadTaskSnapshot.totalBytes) *
@@ -139,7 +139,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  uploadingText: {
+  statusText: {
     marginTop: 20,
     fontSize: 20,
   },
