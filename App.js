@@ -12,8 +12,10 @@ import storage from '@react-native-firebase/storage';
 
 export default function App() {
   const [uploading, setUploading] = useState(false);
-  const [uploadTask, setUploadTask] = useState({});
+  const [uploadTask, setUploadTask] = useState();
+  const [uploadTaskSnapshot, setUploadTaskSnapshot] = useState({});
   const [downloadURL, setDownloadURL] = useState();
+  const [paused, setPaused] = useState(false);
 
   const onTakePhoto = () => launchCamera({ mediaType: 'image' }, onMediaSelect);
 
@@ -25,19 +27,26 @@ export default function App() {
   const onSelectVideoPress = () =>
     launchImageLibrary({ mediaType: 'video' }, onMediaSelect);
 
+  const togglePause = () => {
+    if (paused) uploadTask.resume();
+    else uploadTask.pause();
+    setPaused((paused) => !paused);
+  };
+
   const onMediaSelect = async (media) => {
     if (!media.didCancel) {
       setUploading(true);
       const reference = storage().ref(media.fileName);
       const task = reference.putFile(media.uri);
+      setUploadTask(task);
       task.on('state_changed', (taskSnapshot) => {
-        setUploadTask(taskSnapshot);
+        setUploadTaskSnapshot(taskSnapshot);
       });
       task.then(async () => {
         const downloadURL = reference.getDownloadURL();
         setDownloadURL(downloadURL);
         setUploading(false);
-        setUploadTask({});
+        setUploadTaskSnapshot({});
       });
     }
   };
@@ -61,14 +70,22 @@ export default function App() {
       </View>
       {uploading && (
         <View style={styles.uploading}>
-          <ActivityIndicator size={60} color="#47477b"></ActivityIndicator>
-          <Text style={styles.uploadingText}>Uploading</Text>
+          {!paused && (
+            <ActivityIndicator size={60} color="#47477b"></ActivityIndicator>
+          )}
+          <Text style={styles.uploadingText}>
+            {!paused ? 'Uploading' : 'Paused'}
+          </Text>
           <Text style={styles.uploadingText}>
             {`${(
-              (uploadTask.bytesTransferred / uploadTask.totalBytes) *
+              (uploadTaskSnapshot.bytesTransferred /
+                uploadTaskSnapshot.totalBytes) *
               100
             ).toFixed(2)}% / 100%`}
           </Text>
+          <TouchableOpacity style={styles.button} onPress={togglePause}>
+            <Text style={styles.buttonText}>{paused ? 'Resume' : 'Pause'}</Text>
+          </TouchableOpacity>
         </View>
       )}
       {downloadURL && (
