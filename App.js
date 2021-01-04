@@ -12,11 +12,8 @@ import storage from '@react-native-firebase/storage';
 
 export default function App() {
   const [uploading, setUploading] = useState(false);
-  const [uploadingStatus, setUploadingStatus] = useState({
-    transferred: 0,
-    total: 0,
-  });
-  const [result, setResult] = useState();
+  const [uploadTask, setUploadTask] = useState({});
+  const [downloadURL, setDownloadURL] = useState();
 
   const onTakePhoto = () => launchCamera({ mediaType: 'image' }, onMediaSelect);
 
@@ -29,22 +26,20 @@ export default function App() {
     launchImageLibrary({ mediaType: 'video' }, onMediaSelect);
 
   const onMediaSelect = async (media) => {
-    setUploading(true);
-    const reference = storage().ref(media.fileName);
-    const task = reference.putFile(media.uri);
-    task.on('state_changed', (taskSnapshot) => {
-      setUploadingStatus({
-        transferred: taskSnapshot.bytesTransferred,
-        total: taskSnapshot.totalBytes,
+    if (!media.didCancel) {
+      setUploading(true);
+      const reference = storage().ref(media.fileName);
+      const task = reference.putFile(media.uri);
+      task.on('state_changed', (taskSnapshot) => {
+        setUploadTask(taskSnapshot);
       });
-    });
-    task.then(async () => {
-      console.log('Image uploaded to the bucket!');
-      const downloadURL = await storage().ref(media.fileName).getDownloadURL();
-      console.log(downloadURL);
-      setResult(downloadURL);
-      setUploading(false);
-    });
+      task.then(async () => {
+        const downloadURL = reference.getDownloadURL();
+        setDownloadURL(downloadURL);
+        setUploading(false);
+        setUploadTask({});
+      });
+    }
   };
 
   return (
@@ -69,14 +64,17 @@ export default function App() {
           <ActivityIndicator size={60} color="#47477b"></ActivityIndicator>
           <Text style={styles.uploadingText}>Uploading</Text>
           <Text style={styles.uploadingText}>
-            {uploadingStatus.transferred} / {uploadingStatus.total}
+            {`${(
+              (uploadTask.bytesTransferred / uploadTask.totalBytes) *
+              100
+            ).toFixed(2)}% / 100%`}
           </Text>
         </View>
       )}
-      {result && (
+      {downloadURL && (
         <TouchableOpacity
-          style={[styles.button, style.mediaButton]}
-          onPress={() => Linking.openURL(result)}>
+          style={[styles.button, styles.mediaButton]}
+          onPress={() => Linking.openURL(downloadURL)}>
           <Text style={styles.buttonText}>View Media</Text>
         </TouchableOpacity>
       )}
