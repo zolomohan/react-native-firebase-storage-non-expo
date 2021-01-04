@@ -29,7 +29,6 @@ export default function App() {
     launchImageLibrary({ mediaType: 'video' }, onMediaSelect);
 
   const onMediaSelect = async (media) => {
-    console.log(media);
     setUploading(true);
     const reference = storage().ref(media.fileName);
     const task = reference.putFile(media.uri);
@@ -38,16 +37,13 @@ export default function App() {
         transferred: taskSnapshot.bytesTransferred,
         total: taskSnapshot.totalBytes,
       });
-      console.log(
-        `${taskSnapshot.bytesTransferred} transferred out of ${taskSnapshot.totalBytes}`,
-      );
     });
     task.then(async () => {
       console.log('Image uploaded to the bucket!');
       const downloadURL = await storage().ref(media.fileName).getDownloadURL();
+      console.log(downloadURL);
       setResult(downloadURL);
       setUploading(false);
-      console.log(downloadURL);
     });
   };
 
@@ -79,10 +75,7 @@ export default function App() {
       )}
       {result && (
         <TouchableOpacity
-          style={[
-            styles.button,
-            { position: 'absolute', bottom: 0, marginBottom: 50, width: 300 },
-          ]}
+          style={[styles.button, style.mediaButton]}
           onPress={() => Linking.openURL(result)}>
           <Text style={styles.buttonText}>View Media</Text>
         </TouchableOpacity>
@@ -120,6 +113,12 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#fff',
   },
+  mediaButton: {
+    position: 'absolute',
+    bottom: 0,
+    marginBottom: 50,
+    width: 300,
+  },
   uploading: {
     marginTop: 80,
     justifyContent: 'center',
@@ -127,11 +126,6 @@ const styles = StyleSheet.create({
   },
   uploadingText: {
     marginTop: 20,
-    fontSize: 20,
-  },
-  link: {
-    color: 'blue',
-    marginTop: 100,
     fontSize: 20,
   },
 });
